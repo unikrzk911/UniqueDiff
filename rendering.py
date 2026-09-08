@@ -12,21 +12,20 @@ def _spans_to_html(spans):
     return ''.join(out)
 
 
+def _row_div(row_class, gutter_class, gutter_content, spans):
+    return (
+        f'<div class="diff-row {row_class}"><span class="{gutter_class}">{gutter_content}</span>'
+        f'<span class="line-content">{_spans_to_html(spans)}</span></div>'
+    )
+
+
 def render_side_by_side(rows):
     """Returns (left_html, right_html) for the two side-by-side panes."""
     left_rows, right_rows = [], []
     for row in rows:
         row_class = f"row-{row['tag']}"
-        a_no = row['a_no'] if row['a_no'] else ''
-        b_no = row['b_no'] if row['b_no'] else ''
-        left_rows.append(
-            f'<div class="diff-row {row_class}"><span class="line-no">{a_no}</span>'
-            f'<span class="line-content">{_spans_to_html(row["a_spans"])}</span></div>'
-        )
-        right_rows.append(
-            f'<div class="diff-row {row_class}"><span class="line-no">{b_no}</span>'
-            f'<span class="line-content">{_spans_to_html(row["b_spans"])}</span></div>'
-        )
+        left_rows.append(_row_div(row_class, 'line-no', row['a_no'] or '', row['a_spans']))
+        right_rows.append(_row_div(row_class, 'line-no', row['b_no'] or '', row['b_spans']))
     return (
         f'<div class="diff-pane">{"".join(left_rows)}</div>',
         f'<div class="diff-pane">{"".join(right_rows)}</div>',
@@ -38,21 +37,12 @@ def render_inline(rows):
     parts = []
     for row in rows:
         if row['tag'] == 'equal':
-            parts.append(
-                '<div class="diff-row row-equal"><span class="marker">&nbsp;</span>'
-                f'<span class="line-content">{_spans_to_html(row["a_spans"])}</span></div>'
-            )
+            parts.append(_row_div('row-equal', 'marker', '&nbsp;', row['a_spans']))
             continue
         if row['a_spans']:
-            parts.append(
-                '<div class="diff-row row-delete"><span class="marker">-</span>'
-                f'<span class="line-content">{_spans_to_html(row["a_spans"])}</span></div>'
-            )
+            parts.append(_row_div('row-delete', 'marker', '-', row['a_spans']))
         if row['b_spans']:
-            parts.append(
-                '<div class="diff-row row-insert"><span class="marker">+</span>'
-                f'<span class="line-content">{_spans_to_html(row["b_spans"])}</span></div>'
-            )
+            parts.append(_row_div('row-insert', 'marker', '+', row['b_spans']))
     return f'<div class="diff-pane">{"".join(parts)}</div>'
 
 

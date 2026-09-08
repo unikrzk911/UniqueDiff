@@ -25,6 +25,56 @@ def _inline_diff(line_a, line_b, granularity):
     ]
 
 
+def _row(tag, a_no, a_spans, b_no, b_spans):
+    return {'tag': tag, 'a_no': a_no, 'b_no': b_no, 'a_spans': a_spans, 'b_spans': b_spans}
+
+
+def _equal_rows(lines_a, lines_b, i1, i2, j1, j2):
+    return [
+        _row('equal', a_idx + 1, [('equal', lines_a[a_idx])], b_idx + 1, [('equal', lines_b[b_idx])])
+        for a_idx, b_idx in zip(range(i1, i2), range(j1, j2))
+    ]
+
+
+def _delete_rows(lines_a, i1, i2):
+    return [_row('delete', a_idx + 1, [('delete', lines_a[a_idx])], None, []) for a_idx in range(i1, i2)]
+
+
+def _insert_rows(lines_b, j1, j2):
+    return [_row('insert', None, [], b_idx + 1, [('insert', lines_b[b_idx])]) for b_idx in range(j1, j2)]
+
+
+def _replace_spans(line_a, line_b, granularity):
+    """Sub-spans for one paired replaced line, per the requested granularity."""
+    if granularity == 'line':
+        return [('delete', line_a)], [('insert', line_b)]
+    a_spans, b_spans = [], []
+    for op_tag, a_txt, b_txt in _inline_diff(line_a, line_b, granularity):
+        if op_tag == 'equal':
+            a_spans.append(('equal', a_txt))
+            b_spans.append(('equal', b_txt))
+        elif op_tag == 'delete':
+            a_spans.append(('delete', a_txt))
+        elif op_tag == 'insert':
+            b_spans.append(('insert', b_txt))
+        elif op_tag == 'replace':
+            a_spans.append(('delete', a_txt))
+            b_spans.append(('insert', b_txt))
+    return a_spans, b_spans
+
+
+def _replace_rows(lines_a, lines_b, i1, i2, j1, j2, granularity):
+    paired = min(i2 - i1, j2 - j1)
+    rows = []
+    for offset in range(paired):
+        a_idx, b_idx = i1 + offset, j1 + offset
+        a_spans, b_spans = _replace_spans(lines_a[a_idx], lines_b[b_idx], granularity)
+        rows.append(_row('replace', a_idx + 1, a_spans, b_idx + 1, b_spans))
+    rows += _delete_rows(lines_a, i1 + paired, i2)
+    rows += _insert_rows(lines_b, j1 + paired, j2)
+    return rows
+
+
 def compute_line_diff(text_a, text_b, granularity='line'):
     """
     Line-aligns text_a/text_b with difflib and returns a list of row dicts:
@@ -37,62 +87,15 @@ def compute_line_diff(text_a, text_b, granularity='line'):
     lines_b = text_b.splitlines()
     sm = difflib.SequenceMatcher(None, lines_a, lines_b, autojunk=False)
     rows = []
-
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
         if tag == 'equal':
-            for a_idx, b_idx in zip(range(i1, i2), range(j1, j2)):
-                rows.append({
-                    'tag': 'equal', 'a_no': a_idx + 1, 'b_no': b_idx + 1,
-                    'a_spans': [('equal', lines_a[a_idx])],
-                    'b_spans': [('equal', lines_b[b_idx])],
-                })
+            rows += _equal_rows(lines_a, lines_b, i1, i2, j1, j2)
         elif tag == 'delete':
-            for a_idx in range(i1, i2):
-                rows.append({
-                    'tag': 'delete', 'a_no': a_idx + 1, 'b_no': None,
-                    'a_spans': [('delete', lines_a[a_idx])], 'b_spans': [],
-                })
+            rows += _delete_rows(lines_a, i1, i2)
         elif tag == 'insert':
-            for b_idx in range(j1, j2):
-                rows.append({
-                    'tag': 'insert', 'a_no': None, 'b_no': b_idx + 1,
-                    'a_spans': [], 'b_spans': [('insert', lines_b[b_idx])],
-                })
+            rows += _insert_rows(lines_b, j1, j2)
         elif tag == 'replace':
-            a_range, b_range = list(range(i1, i2)), list(range(j1, j2))
-            paired = min(len(a_range), len(b_range))
-            for k in range(paired):
-                a_idx, b_idx = a_range[k], b_range[k]
-                line_a, line_b = lines_a[a_idx], lines_b[b_idx]
-                if granularity == 'line':
-                    a_spans, b_spans = [('delete', line_a)], [('insert', line_b)]
-                else:
-                    a_spans, b_spans = [], []
-                    for op_tag, a_txt, b_txt in _inline_diff(line_a, line_b, granularity):
-                        if op_tag == 'equal':
-                            a_spans.append(('equal', a_txt))
-                            b_spans.append(('equal', b_txt))
-                        elif op_tag == 'delete':
-                            a_spans.append(('delete', a_txt))
-                        elif op_tag == 'insert':
-                            b_spans.append(('insert', b_txt))
-                        elif op_tag == 'replace':
-                            a_spans.append(('delete', a_txt))
-                            b_spans.append(('insert', b_txt))
-                rows.append({
-                    'tag': 'replace', 'a_no': a_idx + 1, 'b_no': b_idx + 1,
-                    'a_spans': a_spans, 'b_spans': b_spans,
-                })
-            for a_idx in a_range[paired:]:
-                rows.append({
-                    'tag': 'delete', 'a_no': a_idx + 1, 'b_no': None,
-                    'a_spans': [('delete', lines_a[a_idx])], 'b_spans': [],
-                })
-            for b_idx in b_range[paired:]:
-                rows.append({
-                    'tag': 'insert', 'a_no': None, 'b_no': b_idx + 1,
-                    'a_spans': [], 'b_spans': [('insert', lines_b[b_idx])],
-                })
+            rows += _replace_rows(lines_a, lines_b, i1, i2, j1, j2, granularity)
     return rows
 
 

@@ -6,13 +6,13 @@ import diff_engine
 import rendering
 import syntax
 import utils
-from styles import DIFF_CSS, SYNTAX_CSS
+from styles import ALL_CSS
 
 MAX_RECOMMENDED_CHARS = 200_000
 MODE_MAP = {"Line": "line", "Word": "word", "Character": "char"}
 
 st.set_page_config(page_title="UniqueDiff", page_icon="🔍", layout="wide")
-st.markdown(f"<style>{DIFF_CSS}{SYNTAX_CSS}</style>", unsafe_allow_html=True)
+st.markdown(f"<style>{ALL_CSS}</style>", unsafe_allow_html=True)
 
 st.title("🔍 UniqueDiff")
 st.caption("Paste or upload two blocks of text to see what changed. Nothing is saved to disk.")
@@ -73,7 +73,10 @@ if compare_clicked:
     st.session_state.has_compared = True
 
 
-def _panel(col, label, text_key, uploader_key, tracker_key, filename_key):
+def _panel(col, label, suffix):
+    """suffix ('a' or 'b') derives this panel's session-state keys, e.g. text_a/upload_name_a."""
+    text_key, uploader_key = f"text_{suffix}", f"uploader_{suffix}"
+    tracker_key, filename_key = f"upload_fp_{suffix}", f"upload_name_{suffix}"
     with col:
         st.subheader(label)
         uploaded = st.file_uploader(f"Upload for {label}", key=uploader_key, label_visibility="collapsed")
@@ -92,8 +95,8 @@ def _panel(col, label, text_key, uploader_key, tracker_key, filename_key):
 
 
 col_a, col_b = st.columns(2)
-_panel(col_a, "Original", "text_a", "uploader_a", "upload_fp_a", "upload_name_a")
-_panel(col_b, "Changed", "text_b", "uploader_b", "upload_fp_b", "upload_name_b")
+_panel(col_a, "Original", "a")
+_panel(col_b, "Changed", "b")
 
 st.divider()
 
@@ -158,7 +161,7 @@ st.divider()
 st.subheader("Export")
 
 unified_text = diff_engine.unified_diff_text(text_a_raw, text_b_raw) or "No differences."
-full_html_export = rendering.render_full_html_export(rows, DIFF_CSS + SYNTAX_CSS, tokens_a, tokens_b)
+full_html_export = rendering.render_full_html_export(rows, ALL_CSS, tokens_a, tokens_b)
 
 e1, e2, e3, e4 = st.columns(4)
 with e1:

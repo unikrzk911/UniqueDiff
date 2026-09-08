@@ -57,3 +57,5 @@ SYNTAX_CSS = """
 .hl-na { color: #d19a66; }
 .hl-err { color: #e06c75; text-decoration: underline wavy; }
 """
+
+ALL_CSS = DIFF_CSS + SYNTAX_CSS

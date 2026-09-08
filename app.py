@@ -4,14 +4,15 @@ import streamlit as st
 
 import diff_engine
 import rendering
+import syntax
 import utils
-from styles import DIFF_CSS
+from styles import DIFF_CSS, SYNTAX_CSS
 
 MAX_RECOMMENDED_CHARS = 200_000
 MODE_MAP = {"Line": "line", "Word": "word", "Character": "char"}
 
 st.set_page_config(page_title="UniqueDiff", page_icon="🔍", layout="wide")
-st.markdown(f"<style>{DIFF_CSS}</style>", unsafe_allow_html=True)
+st.markdown(f"<style>{DIFF_CSS}{SYNTAX_CSS}</style>", unsafe_allow_html=True)
 
 st.title("🔍 UniqueDiff")
 st.caption("Paste or upload two blocks of text to see what changed. Nothing is saved to disk.")
@@ -29,6 +30,11 @@ with st.sidebar:
     ignore_line_endings = st.checkbox("Ignore line endings (CRLF/LF)")
     ignore_blank_lines = st.checkbox("Ignore blank lines")
     st.divider()
+    language_label = st.selectbox(
+        "Syntax highlighting", list(syntax.LANGUAGE_CHOICES.keys()), index=0,
+        help="Auto-detect uses an uploaded file's extension, falling back to guessing from content.",
+    )
+    st.divider()
     st.markdown(
         "**UniqueDiff**\n\n"
         "Built by [Unique Rajak](https://www.linkedin.com/in/unikrzk/)\n\n"
@@ -40,6 +46,9 @@ mode_key = MODE_MAP[mode_label]
 for key in ("text_a", "text_b"):
     if key not in st.session_state:
         st.session_state[key] = ""
+for key in ("upload_name_a", "upload_name_b"):
+    if key not in st.session_state:
+        st.session_state[key] = None
 if "has_compared" not in st.session_state:
     st.session_state.has_compared = False
 
@@ -49,17 +58,22 @@ with tb1:
 with tb2:
     if st.button("Swap", use_container_width=True):
         st.session_state.text_a, st.session_state.text_b = st.session_state.text_b, st.session_state.text_a
+        st.session_state.upload_name_a, st.session_state.upload_name_b = (
+            st.session_state.upload_name_b, st.session_state.upload_name_a,
+        )
 with tb3:
     if st.button("Clear", use_container_width=True):
         st.session_state.text_a = ""
         st.session_state.text_b = ""
+        st.session_state.upload_name_a = None
+        st.session_state.upload_name_b = None
         st.session_state.has_compared = False
 
 if compare_clicked:
     st.session_state.has_compared = True
 
 
-def _panel(col, label, text_key, uploader_key, tracker_key):
+def _panel(col, label, text_key, uploader_key, tracker_key, filename_key):
     with col:
         st.subheader(label)
         uploaded = st.file_uploader(f"Upload for {label}", key=uploader_key, label_visibility="collapsed")
@@ -68,6 +82,7 @@ def _panel(col, label, text_key, uploader_key, tracker_key):
             if st.session_state.get(tracker_key) != fingerprint:
                 st.session_state[text_key] = utils.read_uploaded_file(uploaded)
                 st.session_state[tracker_key] = fingerprint
+                st.session_state[filename_key] = uploaded.name
         st.text_area(
             label, key=text_key, height=300, label_visibility="collapsed",
             placeholder=f"Paste your {label.lower()} text here…",
@@ -77,8 +92,8 @@ def _panel(col, label, text_key, uploader_key, tracker_key):
 
 
 col_a, col_b = st.columns(2)
-_panel(col_a, "Original", "text_a", "uploader_a", "upload_fp_a")
-_panel(col_b, "Changed", "text_b", "uploader_b", "upload_fp_b")
+_panel(col_a, "Original", "text_a", "uploader_a", "upload_fp_a", "upload_name_a")
+_panel(col_b, "Changed", "text_b", "uploader_b", "upload_fp_b", "upload_name_b")
 
 st.divider()
 
@@ -107,6 +122,12 @@ if text_a == text_b:
 rows = diff_engine.compute_line_diff(text_a, text_b, granularity=mode_key)
 stats = diff_engine.compute_stats(text_a, text_b)
 
+lexer = syntax.resolve_lexer(
+    language_label, text_a, text_b, st.session_state.upload_name_a, st.session_state.upload_name_b,
+)
+tokens_a = syntax.tokenize_text_by_line(text_a, lexer) if lexer else None
+tokens_b = syntax.tokenize_text_by_line(text_b, lexer) if lexer else None
+
 s1, s2, s3, s4 = st.columns(4)
 s1.metric("Lines added", stats["added"])
 s2.metric("Lines removed", stats["removed"])
@@ -122,7 +143,7 @@ with st.expander("Legend"):
     )
 
 if view == "Side-by-side":
-    left_html, right_html = rendering.render_side_by_side(rows)
+    left_html, right_html = rendering.render_side_by_side(rows, tokens_a, tokens_b)
     dcol_a, dcol_b = st.columns(2)
     with dcol_a:
         st.markdown("**Original**")
@@ -131,13 +152,13 @@ if view == "Side-by-side":
         st.markdown("**Changed**")
         st.markdown(right_html, unsafe_allow_html=True)
 else:
-    st.markdown(rendering.render_inline(rows), unsafe_allow_html=True)
+    st.markdown(rendering.render_inline(rows, tokens_a, tokens_b), unsafe_allow_html=True)
 
 st.divider()
 st.subheader("Export")
 
 unified_text = diff_engine.unified_diff_text(text_a_raw, text_b_raw) or "No differences."
-full_html_export = rendering.render_full_html_export(rows, DIFF_CSS)
+full_html_export = rendering.render_full_html_export(rows, DIFF_CSS + SYNTAX_CSS, tokens_a, tokens_b)
 
 e1, e2, e3, e4 = st.columns(4)
 with e1:

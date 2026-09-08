@@ -42,3 +42,18 @@ DIFF_CSS = """
 .diff-equal {}
 .diff-blank { opacity: 0.3; }
 """
+
+# Short Pygments token classes (see syntax.token_css_class), prefixed "hl-"
+# and grouped by color so multiple related token kinds share a rule.
+SYNTAX_CSS = """
+.hl-k, .hl-kc, .hl-kd, .hl-kn, .hl-kp, .hl-kr, .hl-kt, .hl-ow { color: #c678dd; font-weight: 600; }
+.hl-s, .hl-s1, .hl-s2, .hl-sa, .hl-sb, .hl-sc, .hl-sd, .hl-se, .hl-sh, .hl-si, .hl-sx, .hl-sr, .hl-ss, .hl-dl { color: #98c379; }
+.hl-c, .hl-c1, .hl-cm, .hl-cp, .hl-cpf, .hl-ch, .hl-cs { color: #7f848e; font-style: italic; }
+.hl-m, .hl-mb, .hl-mf, .hl-mh, .hl-mi, .hl-mo, .hl-il { color: #d19a66; }
+.hl-nf, .hl-fm { color: #61afef; }
+.hl-nc, .hl-vc { color: #e5c07b; }
+.hl-nb, .hl-bp { color: #56b6c2; }
+.hl-nd, .hl-ne, .hl-nt { color: #e06c75; }
+.hl-na { color: #d19a66; }
+.hl-err { color: #e06c75; text-decoration: underline wavy; }
+"""

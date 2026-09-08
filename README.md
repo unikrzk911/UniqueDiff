@@ -1,4 +1,4 @@
-# Diff Checker
+# UniqueDiff
 
 A Streamlit app for comparing two blocks of text — paste or upload, pick line/word/character
 granularity, and see additions and removals highlighted side-by-side or as a unified diff.
@@ -30,3 +30,9 @@ streamlit run app.py
   the line level, which is also what the summary counts (added/removed/changed) are based on.
 - "Ignore whitespace/case/line-endings/blank lines" only affect the diff computation and
   display — the Original/Changed downloads always contain your exact, unmodified input.
+
+## Author
+
+**Unique Rajak**
+- LinkedIn: https://www.linkedin.com/in/unikrzk/
+- Email: unique.rajak.p@gmail.com

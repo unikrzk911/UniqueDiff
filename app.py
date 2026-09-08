@@ -10,10 +10,10 @@ from styles import DIFF_CSS
 MAX_RECOMMENDED_CHARS = 200_000
 MODE_MAP = {"Line": "line", "Word": "word", "Character": "char"}
 
-st.set_page_config(page_title="Diff Checker", page_icon="🔍", layout="wide")
+st.set_page_config(page_title="UniqueDiff", page_icon="🔍", layout="wide")
 st.markdown(f"<style>{DIFF_CSS}</style>", unsafe_allow_html=True)
 
-st.title("🔍 Diff Checker")
+st.title("🔍 UniqueDiff")
 st.caption("Paste or upload two blocks of text to see what changed. Nothing is saved to disk.")
 
 with st.sidebar:
@@ -28,6 +28,12 @@ with st.sidebar:
     ignore_case = st.checkbox("Ignore case")
     ignore_line_endings = st.checkbox("Ignore line endings (CRLF/LF)")
     ignore_blank_lines = st.checkbox("Ignore blank lines")
+    st.divider()
+    st.markdown(
+        "**UniqueDiff**\n\n"
+        "Built by [Unique Rajak](https://www.linkedin.com/in/unikrzk/)\n\n"
+        "unique.rajak.p@gmail.com"
+    )
 
 mode_key = MODE_MAP[mode_label]
 

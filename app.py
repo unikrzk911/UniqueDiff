@@ -1,4 +1,5 @@
 import html as html_lib
+import time
 
 import streamlit as st
 
@@ -14,13 +15,16 @@ MODE_MAP = {"Line": "line", "Word": "word", "Character": "char"}
 st.set_page_config(page_title="UniqueDiff", page_icon="🔍", layout="wide")
 st.markdown(f"<style>{ALL_CSS}</style>", unsafe_allow_html=True)
 
-st.title("🔍 UniqueDiff")
+title_col, export_col = st.columns([5, 1], vertical_alignment="bottom")
+title_col.title("🔍 UniqueDiff")
+# Filled once a diff exists, so the Export menu only appears when there's something to export.
+export_slot = export_col.empty()
 st.caption("Paste or upload two blocks of text to see what changed. Nothing is saved to disk.")
 
 with st.sidebar:
     st.header("Options")
     mode_label = st.radio(
-        "Diff granularity", list(MODE_MAP.keys()), index=0,
+        "Diff granularity", list(MODE_MAP.keys()), index=1,
         help="Controls how differences within a changed line are highlighted.",
     )
     view = st.radio("View", ["Side-by-side", "Inline (unified)"], index=0)
@@ -51,25 +55,19 @@ for key in ("upload_name_a", "upload_name_b"):
 if "has_compared" not in st.session_state:
     st.session_state.has_compared = False
 
-tb1, tb2, tb3, _ = st.columns([1, 1, 1, 5])
-with tb1:
-    compare_clicked = st.button("Compare", type="primary", use_container_width=True)
-with tb2:
-    if st.button("Swap", use_container_width=True):
-        st.session_state.text_a, st.session_state.text_b = st.session_state.text_b, st.session_state.text_a
-        st.session_state.upload_name_a, st.session_state.upload_name_b = (
-            st.session_state.upload_name_b, st.session_state.upload_name_a,
-        )
-with tb3:
-    if st.button("Clear", use_container_width=True):
-        st.session_state.text_a = ""
-        st.session_state.text_b = ""
-        st.session_state.upload_name_a = None
-        st.session_state.upload_name_b = None
-        st.session_state.has_compared = False
+# Swap/Clear write the text areas' keys, which Streamlit only allows before those
+# widgets render; callbacks run at the start of the rerun, so the buttons can sit below them.
+def _swap():
+    ss = st.session_state
+    ss.text_a, ss.text_b = ss.text_b, ss.text_a
+    ss.upload_name_a, ss.upload_name_b = ss.upload_name_b, ss.upload_name_a
 
-if compare_clicked:
-    st.session_state.has_compared = True
+
+def _clear():
+    ss = st.session_state
+    ss.text_a = ss.text_b = ""
+    ss.upload_name_a = ss.upload_name_b = None
+    ss.has_compared = False
 
 
 def _panel(col, label, suffix):
@@ -93,87 +91,97 @@ def _panel(col, label, suffix):
         st.caption(f"{stats['chars']:,} chars · {stats['words']:,} words · {stats['lines']:,} lines")
 
 
+# Created above the inputs so the diff renders on top, but filled after them so it
+# sees this run's uploads.
+results = st.container()
+st.divider()
+
 col_a, col_b = st.columns(2)
 _panel(col_a, "Original", "a")
 _panel(col_b, "Changed", "b")
 
-st.divider()
-
-if not st.session_state.has_compared:
-    st.info("Enter or upload text on both sides, then click **Compare**.")
-    st.stop()
-
-text_a_raw = st.session_state.text_a
-text_b_raw = st.session_state.text_b
-
-if not text_a_raw and not text_b_raw:
-    st.warning("Both inputs are empty — nothing to compare.")
-    st.stop()
-
-for label, txt in (("Original", text_a_raw), ("Changed", text_b_raw)):
-    if len(txt) > MAX_RECOMMENDED_CHARS:
-        st.warning(f"{label} text is very large ({len(txt):,} characters) — the diff may take a moment.")
-
-text_a = utils.normalize_text(text_a_raw, ignore_whitespace, ignore_case, ignore_line_endings, ignore_blank_lines)
-text_b = utils.normalize_text(text_b_raw, ignore_whitespace, ignore_case, ignore_line_endings, ignore_blank_lines)
-
-if text_a == text_b:
-    st.success("No differences found — the two texts are identical (with the selected options applied).")
-    st.stop()
-
-rows = diff_engine.compute_line_diff(text_a, text_b, granularity=mode_key)
-stats = diff_engine.compute_stats(text_a, text_b)
-
-lexer = syntax.resolve_lexer(
-    language_label, text_a, text_b, st.session_state.upload_name_a, st.session_state.upload_name_b,
-)
-tokens_a = syntax.tokenize_text_by_line(text_a, lexer) if lexer else None
-tokens_b = syntax.tokenize_text_by_line(text_b, lexer) if lexer else None
-
-s1, s2, s3, s4 = st.columns(4)
-s1.metric("Lines added", stats["added"])
-s2.metric("Lines removed", stats["removed"])
-s3.metric("Lines changed", stats["changed"])
-s4.metric("Similarity", f"{stats['similarity']}%")
-
-with st.expander("Legend"):
-    st.markdown(
-        '<span class="diff-add">&nbsp;Added&nbsp;</span>&nbsp;&nbsp;'
-        '<span class="diff-del">&nbsp;Removed&nbsp;</span>&nbsp;&nbsp;'
-        '<span class="diff-equal">Unchanged</span>',
-        unsafe_allow_html=True,
+tb1, tb2, tb3, _ = st.columns([1, 1, 1, 5])
+if tb1.button("Compare", type="primary", use_container_width=True):
+    st.session_state.has_compared = True
+    # Bring the results (rendered above the inputs) into view. The timestamp makes each
+    # click's markup unique so the frontend re-runs the script instead of reusing it.
+    st.html(
+        f"<script>/* {time.time_ns()} */"
+        "window.parent.document.querySelector('h1')?.scrollIntoView({behavior: 'smooth'});</script>",
+        unsafe_allow_javascript=True,
     )
+tb2.button("Swap", on_click=_swap, use_container_width=True)
+tb3.button("Clear", on_click=_clear, use_container_width=True)
 
-if view == "Side-by-side":
-    st.markdown(
-        '<div class="diff-pair"><b>Original</b><b>Changed</b></div>'
-        + rendering.render_side_by_side(rows, tokens_a, tokens_b),
-        unsafe_allow_html=True,
+with results:
+    if not st.session_state.has_compared:
+        st.info("Enter or upload text on both sides, then click **Compare**.")
+        st.stop()
+
+    text_a_raw = st.session_state.text_a
+    text_b_raw = st.session_state.text_b
+
+    if not text_a_raw and not text_b_raw:
+        st.warning("Both inputs are empty — nothing to compare.")
+        st.stop()
+
+    for label, txt in (("Original", text_a_raw), ("Changed", text_b_raw)):
+        if len(txt) > MAX_RECOMMENDED_CHARS:
+            st.warning(f"{label} text is very large ({len(txt):,} characters) — the diff may take a moment.")
+
+    text_a = utils.normalize_text(text_a_raw, ignore_whitespace, ignore_case, ignore_line_endings, ignore_blank_lines)
+    text_b = utils.normalize_text(text_b_raw, ignore_whitespace, ignore_case, ignore_line_endings, ignore_blank_lines)
+
+    if text_a == text_b:
+        st.success("No differences found — the two texts are identical (with the selected options applied).")
+        st.stop()
+
+    rows = diff_engine.compute_line_diff(text_a, text_b, granularity=mode_key)
+    stats = diff_engine.compute_stats(text_a, text_b)
+
+    lexer = syntax.resolve_lexer(
+        language_label, text_a, text_b, st.session_state.upload_name_a, st.session_state.upload_name_b,
     )
-else:
-    st.markdown(rendering.render_inline(rows, tokens_a, tokens_b), unsafe_allow_html=True)
+    tokens_a = syntax.tokenize_text_by_line(text_a, lexer) if lexer else None
+    tokens_b = syntax.tokenize_text_by_line(text_b, lexer) if lexer else None
 
-st.divider()
-st.subheader("Export")
+    s1, s2, s3, s4 = st.columns(4)
+    s1.metric("Lines added", stats["added"])
+    s2.metric("Lines removed", stats["removed"])
+    s3.metric("Lines changed", stats["changed"])
+    s4.metric("Similarity", f"{stats['similarity']}%")
 
-unified_text = diff_engine.unified_diff_text(text_a_raw, text_b_raw) or "No differences."
-full_html_export = rendering.render_full_html_export(rows, ALL_CSS, tokens_a, tokens_b)
+    with st.expander("Legend"):
+        st.markdown(
+            '<span class="diff-add">&nbsp;Added&nbsp;</span>&nbsp;&nbsp;'
+            '<span class="diff-del">&nbsp;Removed&nbsp;</span>&nbsp;&nbsp;'
+            '<span class="diff-equal">Unchanged</span>',
+            unsafe_allow_html=True,
+        )
 
-e1, e2, e3, e4 = st.columns(4)
-with e1:
-    st.download_button("Diff (.diff)", unified_text, file_name="diff.diff", use_container_width=True)
-with e2:
-    st.download_button("Diff (.html)", full_html_export, file_name="diff.html", mime="text/html", use_container_width=True)
-with e3:
-    st.download_button("Original (.txt)", text_a_raw, file_name="original.txt", use_container_width=True)
-with e4:
-    st.download_button("Changed (.txt)", text_b_raw, file_name="changed.txt", use_container_width=True)
+    if view == "Side-by-side":
+        st.markdown(
+            '<div class="diff-pair"><b>Original</b><b>Changed</b></div>'
+            + rendering.render_side_by_side(rows, tokens_a, tokens_b),
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(rendering.render_inline(rows, tokens_a, tokens_b), unsafe_allow_html=True)
 
-copy_widget = f"""
-<textarea id="diff-copy-src" style="display:none">{html_lib.escape(unified_text)}</textarea>
-<button onclick="navigator.clipboard.writeText(document.getElementById('diff-copy-src').value)"
-        style="padding:6px 14px;border-radius:6px;border:1px solid #999;cursor:pointer;background:transparent;">
-  Copy diff to clipboard
-</button>
-"""
-st.iframe(copy_widget, height=45)
+    unified_text = diff_engine.unified_diff_text(text_a_raw, text_b_raw) or "No differences."
+    full_html_export = rendering.render_full_html_export(rows, ALL_CSS, tokens_a, tokens_b)
+
+    export_menu = export_slot.container().popover("Export", icon=":material/download:", use_container_width=True)
+    export_menu.download_button("Diff (.diff)", unified_text, file_name="diff.diff", use_container_width=True)
+    export_menu.download_button("Diff (.html)", full_html_export, file_name="diff.html", mime="text/html", use_container_width=True)
+    export_menu.download_button("Original (.txt)", text_a_raw, file_name="original.txt", use_container_width=True)
+    export_menu.download_button("Changed (.txt)", text_b_raw, file_name="changed.txt", use_container_width=True)
+
+    copy_widget = f"""
+    <textarea id="diff-copy-src" style="display:none">{html_lib.escape(unified_text)}</textarea>
+    <button onclick="navigator.clipboard.writeText(document.getElementById('diff-copy-src').value)"
+            style="padding:6px 14px;border-radius:6px;border:1px solid #999;cursor:pointer;background:#f0f2f6;color:#31333f;">
+      Copy diff to clipboard
+    </button>
+    """
+    export_menu.iframe(copy_widget, height=45)

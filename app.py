@@ -1,5 +1,6 @@
 import html as html_lib
 import time
+from pathlib import Path
 
 import streamlit as st
 
@@ -11,12 +12,17 @@ from styles import ALL_CSS
 
 MAX_RECOMMENDED_CHARS = 200_000
 MODE_MAP = {"Line": "line", "Word": "word", "Character": "char"}
+ASSETS_DIR = Path(__file__).parent / "assets"
 
-st.set_page_config(page_title="UniqueDiff", page_icon="🔍", layout="wide")
+st.set_page_config(page_title="UniqueDiff", page_icon=ASSETS_DIR / "uniquediff-icon.svg", layout="wide")
 st.markdown(f"<style>{ALL_CSS}</style>", unsafe_allow_html=True)
 
 title_col, export_col = st.columns([5, 1], vertical_alignment="bottom")
-title_col.title("🔍 UniqueDiff")
+# Inlined (not an <img>) so the SVG inherits Streamlit's theme color-scheme and swaps light/dark
+# live. Lines are joined so markdown doesn't read indented SVG as a code block. Kept inside an
+# <h1>: the Compare button's scroll-to-results script targets it.
+logo_svg = " ".join(line.strip() for line in (ASSETS_DIR / "uniquediff-logo.svg").read_text("utf-8").splitlines())
+title_col.markdown(f"<h1>{logo_svg}</h1>", unsafe_allow_html=True)
 # Filled once a diff exists, so the Export menu only appears when there's something to export.
 export_slot = export_col.empty()
 st.caption("Paste or upload two blocks of text to see what changed. Nothing is saved to disk.")

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="512" height="512" style="color-scheme:light dark">
+  <!-- Light and dark favicon in one: color-scheme "light dark" makes
+       light-dark() follow the browser/OS theme, which is what the tab bar uses. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:light-dark(#FFFFFF,#2C3445)"/><stop offset="1" style="stop-color:light-dark(#E8ECF2,#0E1218)"/></linearGradient>
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="40" y1="0" x2="80" y2="0"><stop offset="0" style="stop-color:light-dark(#F2545B,#FF6B6B)"/><stop offset="1" style="stop-color:light-dark(#12B886,#2DD4A7)"/></linearGradient>
+    <linearGradient id="hl" gradientUnits="userSpaceOnUse" x1="0" y1="36" x2="0" y2="96"><stop offset="0" stop-color="#FFF" stop-opacity=".35"/><stop offset=".45" stop-color="#FFF" stop-opacity="0"/></linearGradient>
+    <filter id="s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="3" style="flood-color:light-dark(rgba(0,0,0,.18),rgba(0,0,0,.45))"/></filter>
+  </defs>
+  <path d="M60 0C110 0 120 10 120 60S110 120 60 120 0 110 0 60 10 0 60 0Z" fill="url(#bg)"/>
+  <path d="M60 0C110 0 120 10 120 60S110 120 60 120 0 110 0 60 10 0 60 0Z" fill="none" stroke-width="1.5" style="stroke:light-dark(rgba(0,0,0,.07),rgba(255,255,255,.14))"/>
+  <g filter="url(#s)" stroke-linecap="round" fill="none">
+    <path d="M40 44V68a20 20 0 0 0 40 0V44" stroke="url(#g)" stroke-width="16"/>
+    <path d="M34 26h12" stroke-width="4.5" style="stroke:light-dark(#F2545B,#FF6B6B)"/>
+    <path d="M74 26h12M80 20v12" stroke-width="4.5" style="stroke:light-dark(#12B886,#2DD4A7)"/>
+  </g>
+  <path d="M40 44V68a20 20 0 0 0 40 0V44" fill="none" stroke="url(#hl)" stroke-width="16" stroke-linecap="round"/>
+</svg>

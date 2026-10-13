@@ -146,14 +146,11 @@ with st.expander("Legend"):
     )
 
 if view == "Side-by-side":
-    left_html, right_html = rendering.render_side_by_side(rows, tokens_a, tokens_b)
-    dcol_a, dcol_b = st.columns(2)
-    with dcol_a:
-        st.markdown("**Original**")
-        st.markdown(left_html, unsafe_allow_html=True)
-    with dcol_b:
-        st.markdown("**Changed**")
-        st.markdown(right_html, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="diff-pair"><b>Original</b><b>Changed</b></div>'
+        + rendering.render_side_by_side(rows, tokens_a, tokens_b),
+        unsafe_allow_html=True,
+    )
 else:
     st.markdown(rendering.render_inline(rows, tokens_a, tokens_b), unsafe_allow_html=True)
 

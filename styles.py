@@ -1,6 +1,6 @@
 DIFF_CSS = """
-.diff-container { display: flex; gap: 12px; }
-.diff-column { flex: 1; min-width: 0; }
+.diff-pair { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
+.diff-pair > * { min-width: 0; }
 .diff-pane {
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 0.85rem;
@@ -9,6 +9,19 @@ DIFF_CSS = """
   overflow: auto;
   max-height: 600px;
 }
+.diff-wrap { display: flex; gap: 2px; }
+.diff-wrap > .diff-pane { flex: 1; min-width: 0; }
+.diff-ruler {
+  position: relative;
+  flex: 0 0 12px;
+  border-radius: 3px;
+  background: rgba(128, 128, 128, 0.12);
+}
+.ruler-mark { position: absolute; left: 0; right: 0; min-height: 3px; }
+.ruler-mark:hover { filter: brightness(1.3); }
+.ruler-insert { background: rgba(46, 160, 67, 0.85); }
+.ruler-delete { background: rgba(248, 81, 73, 0.85); }
+.ruler-replace { background: rgba(56, 139, 253, 0.85); }
 .diff-row {
   display: flex;
   white-space: pre-wrap;

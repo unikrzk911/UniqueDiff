@@ -15,7 +15,7 @@ def test_render_side_by_side_unchanged_without_tokens():
     with_tokens = rendering.render_side_by_side(rows)
     without_tokens = rendering.render_side_by_side(rows, tokens_a=None, tokens_b=None)
     assert with_tokens == without_tokens
-    assert 'hl-' not in with_tokens[0]
+    assert 'hl-' not in with_tokens
 
 
 def test_render_side_by_side_adds_token_classes():
@@ -23,9 +23,8 @@ def test_render_side_by_side_adds_token_classes():
     rows = diff_engine.compute_line_diff(text, text)
     lexer = get_lexer_by_name("python")
     tokens = syntax.tokenize_text_by_line(text, lexer)
-    left_html, right_html = rendering.render_side_by_side(rows, tokens_a=tokens, tokens_b=tokens)
-    assert 'hl-k' in left_html  # 'def' is a keyword
-    assert 'hl-k' in right_html
+    html_out = rendering.render_side_by_side(rows, tokens_a=tokens, tokens_b=tokens)
+    assert html_out.count('hl-k') >= 2  # 'def' is a keyword, on both sides
 
 
 def test_render_inline_adds_token_classes_for_insert_and_delete():
@@ -46,3 +45,11 @@ def test_render_full_html_export_includes_token_classes():
     tokens = syntax.tokenize_text_by_line(text, lexer)
     export = rendering.render_full_html_export(rows, "", tokens_a=tokens, tokens_b=tokens)
     assert 'hl-mi' in export
+
+
+def test_overview_ruler_marks_each_change_run():
+    rows = diff_engine.compute_line_diff("a\nb\nc\nd", "a\nB\nc\nd\ne", granularity='line')
+    html_out = rendering.render_side_by_side(rows)
+    assert 'class="ruler-mark ruler-replace" href="#s-1" style="top:20.000%;height:20.000%"' in html_out
+    assert 'href="#s-4"' in html_out and 'id="s-4"' in html_out
+    assert html_out.count('ruler-mark') == 2

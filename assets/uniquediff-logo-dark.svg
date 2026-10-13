@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 120" width="229" height="64" role="img" aria-label="UniqueDiff">
+  <defs>
+    <linearGradient id="ud-logo-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:#2C3445"/><stop offset="1" style="stop-color:#0E1218"/></linearGradient>
+    <linearGradient id="ud-logo-g" gradientUnits="userSpaceOnUse" x1="40" y1="0" x2="80" y2="0"><stop offset="0" style="stop-color:#FF6B6B"/><stop offset="1" style="stop-color:#2DD4A7"/></linearGradient>
+    <linearGradient id="ud-logo-hl" gradientUnits="userSpaceOnUse" x1="0" y1="36" x2="0" y2="96"><stop offset="0" stop-color="#FFF" stop-opacity=".35"/><stop offset=".45" stop-color="#FFF" stop-opacity="0"/></linearGradient>
+    <linearGradient id="ud-logo-tx" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:#FF6B6B"/><stop offset="1" style="stop-color:#2DD4A7"/></linearGradient>
+    <filter id="ud-logo-s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="3" style="flood-color:rgba(0,0,0,.45)"/></filter>
+  </defs>
+  <path d="M60 0C110 0 120 10 120 60S110 120 60 120 0 110 0 60 10 0 60 0Z" fill="url(#ud-logo-bg)"/>
+  <path d="M60 0C110 0 120 10 120 60S110 120 60 120 0 110 0 60 10 0 60 0Z" fill="none" stroke-width="1.5" style="stroke:rgba(255,255,255,.14)"/>
+  <g filter="url(#ud-logo-s)" stroke-linecap="round" fill="none">
+    <path d="M40 44V68a20 20 0 0 0 40 0V44" stroke="url(#ud-logo-g)" stroke-width="16"/>
+    <path d="M34 26h12" stroke-width="4.5" style="stroke:#FF6B6B"/>
+    <path d="M74 26h12M80 20v12" stroke-width="4.5" style="stroke:#2DD4A7"/>
+  </g>
+  <path d="M40 44V68a20 20 0 0 0 40 0V44" fill="none" stroke="url(#ud-logo-hl)" stroke-width="16" stroke-linecap="round"/>
+  <text x="142" y="77" font-family="-apple-system, 'SF Pro Display', 'Segoe UI Variable Display', Inter, system-ui, sans-serif" font-size="50" letter-spacing="-1">
+    <tspan font-weight="500" style="fill:#F5F5F7">Unique</tspan><tspan fill="url(#ud-logo-tx)" font-weight="700">Diff</tspan>
+  </text>
+</svg>

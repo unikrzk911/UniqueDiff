@@ -107,7 +107,7 @@ if tb1.button("Compare", type="primary", use_container_width=True):
     # click's markup unique so the frontend re-runs the script instead of reusing it.
     st.html(
         f"<script>/* {time.time_ns()} */"
-        "window.parent.document.querySelector('h1')?.scrollIntoView({behavior: 'smooth'});</script>",
+        "document.querySelector('h1')?.scrollIntoView({behavior: 'smooth'});</script>",
         unsafe_allow_javascript=True,
     )
 tb2.button("Swap", on_click=_swap, use_container_width=True)

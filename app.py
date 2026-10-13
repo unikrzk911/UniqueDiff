@@ -38,7 +38,6 @@ with st.sidebar:
     st.markdown(
         "**UniqueDiff**\n\n"
         "Built by [Unique Rajak](https://www.linkedin.com/in/unikrzk/)\n\n"
-        "unique.rajak.p@gmail.com"
     )
 
 mode_key = MODE_MAP[mode_label]

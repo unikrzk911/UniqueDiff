@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="512" height="512" style="color-scheme:light dark">
-  <!-- Light and dark favicon in one: color-scheme "light dark" makes
-       light-dark() follow the browser/OS theme, which is what the tab bar uses. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="512" height="512" style="color-scheme:dark">
+  <!-- Light and dark favicon in one; color-scheme is pinned to dark to match the app
+       (set it to "light dark" to follow the browser/OS theme instead). -->
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:light-dark(#FFFFFF,#2C3445)"/><stop offset="1" style="stop-color:light-dark(#E8ECF2,#0E1218)"/></linearGradient>
     <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="40" y1="0" x2="80" y2="0"><stop offset="0" style="stop-color:light-dark(#F2545B,#FF6B6B)"/><stop offset="1" style="stop-color:light-dark(#12B886,#2DD4A7)"/></linearGradient>

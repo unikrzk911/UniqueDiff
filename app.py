@@ -8,14 +8,14 @@ import diff_engine
 import rendering
 import syntax
 import utils
-from styles import ALL_CSS
+from styles import ALL_CSS, APP_CSS
 
 MAX_RECOMMENDED_CHARS = 200_000
 MODE_MAP = {"Line": "line", "Word": "word", "Character": "char"}
 ASSETS_DIR = Path(__file__).parent / "assets"
 
 st.set_page_config(page_title="UniqueDiff", page_icon=ASSETS_DIR / "uniquediff-icon.svg", layout="wide")
-st.markdown(f"<style>{ALL_CSS}</style>", unsafe_allow_html=True)
+st.markdown(f"<style>{ALL_CSS}{APP_CSS}</style>", unsafe_allow_html=True)
 
 title_col, export_col = st.columns([5, 1], vertical_alignment="bottom")
 # Inlined (not an <img>) so the SVG inherits Streamlit's theme color-scheme and swaps light/dark
@@ -186,7 +186,10 @@ with results:
     copy_widget = f"""
     <textarea id="diff-copy-src" style="display:none">{html_lib.escape(unified_text)}</textarea>
     <button onclick="navigator.clipboard.writeText(document.getElementById('diff-copy-src').value)"
-            style="padding:6px 14px;border-radius:6px;border:1px solid #999;cursor:pointer;background:#f0f2f6;color:#31333f;">
+            style="padding:7px 16px;border-radius:10px;border:none;cursor:pointer;font:600 14px system-ui,sans-serif;
+                   background:linear-gradient(90deg,#F2545B,#12B886);color:#0E1218;"
+            onpointerdown="this.style.transform='scale(0.97)'" onpointerup="this.style.transform=''"
+            onpointerleave="this.style.transform=''">
       Copy diff to clipboard
     </button>
     """
